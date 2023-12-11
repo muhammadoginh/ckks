@@ -1,5 +1,6 @@
 # FHE Implementation 
-    -[x] implementation of CKKS Scheme using C++ (on going)
+implementation of CKKS Scheme using C++
+> Based on: https://github.com/openfheorg/openfhe-development
 
 ### How to set up this project
 type this script in your terminal
@@ -23,6 +24,8 @@ The below trees describes the structure of this repostitory.
 |
 |-> build
 |
+|-> configure
+|
 |-> src
 |   |-> binfhe
 |   |-> core
@@ -36,6 +39,7 @@ The below trees describes the structure of this repostitory.
 |:------------|:-----------------|
 | benchmark   | Code for benchmarking OpenFHE library components, using the Google Benchmark frameworks. |
 | build       | Binaries and build scripts (this folder is created by the user).  |
+| configure   | Preparation for creating config_core.h file  |
 | src         | Library source code. Each subcomponent has four or five subdirectories: include (for library header files), lib (for library source files), unittest (for google test cases), examples (for code samples), and optionally extras (for additional code samples). |
 | test        | Google unit test code.   |
-| third-party | Code for distributions from third parties (includes NTL/GMP + git submodules for tcmalloc, cereal, google test, and google benchmark). |
+| third-party | Code for distributions from third parties (includes NTL/GMP + git submodules for gperftools, cereal, google test, and google benchmark). |

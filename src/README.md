@@ -10,7 +10,7 @@ flowchart BT
 
 # binFHE
 
-    -[ ] Boolean arithmetic, comparisons, and aribtrary function evaluation based on Ducas-Micciancio (DM) and Chillotti-Gama-Georgieva-Izabachene (CGGI) schemes
+- Boolean arithmetic, comparisons, and aribtrary function evaluation based on DM and CGGI schemes
 
 # core
 
@@ -18,5 +18,14 @@ flowchart BT
 
 # pke
 
-    -[x] real-number arithmetic based on Cheon-Kim-Kim-Song (CKKS) scheme
-    -[ ] integer arithmetic based on Brakerski-Gentry-Vaikuntanathan (BGV) and Brakerski/Fan-Vercauteren (BFV) schemes
+- integer and real-number arithmetic based on BGV, BFV, and CKKS schemes
+
+## Warning
+
+Although the OpenFHE team has provided various utility functions to make OpenFHE accessible to
+non-cryptographers, it is still necessary for the end-users to carefully consider how they are using the code. Improper
+use can result in leaked information.
+Use of OpenFHE in production environments should be reviewed by homomorphic encryption experts.
+
+Additionally, see our [Security Considerations](../docs/static_docs/Security.md) for considerations that should be taken into account
+in your work.
