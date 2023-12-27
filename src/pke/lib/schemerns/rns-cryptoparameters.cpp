@@ -35,6 +35,8 @@
 #include "cryptocontext.h"
 #include "schemerns/rns-cryptoparameters.h"
 
+#include <filesystem>
+
 namespace lbcrypto {
 
 void CryptoParametersRNS::PrecomputeCRTTables(KeySwitchTechnique ksTech, ScalingTechnique scalTech,
@@ -94,6 +96,14 @@ void CryptoParametersRNS::PrecomputeCRTTables(KeySwitchTechnique ksTech, Scaling
             }
         }
 
+        // save to file 
+        // moduliPartQ
+        std::ofstream ofs_moduliPartQ("./ofhe_io/rns_decompose/moduliPartQ.txt");
+        for (usint k=0; k <  moduliPartQ.size(); k++){
+            ofs_moduliPartQ << moduliPartQ[k] << std::endl;
+        }
+        ofs_moduliPartQ.close();
+
         // Compute PartQHat_i = Q/Q_j
         std::vector<BigInteger> PartQHat;
         PartQHat.resize(m_numPartQ);
@@ -103,6 +113,40 @@ void CryptoParametersRNS::PrecomputeCRTTables(KeySwitchTechnique ksTech, Scaling
                 if (j != i)
                     PartQHat[i] *= moduliPartQ[j];
             }
+        }
+
+        // save to file 
+        // PartQHat
+        std::ofstream ofs_PartQHat("./ofhe_io/rns_decompose/PartQHat.txt");
+        for (usint k=0; k <  PartQHat.size(); k++){
+            ofs_PartQHat << PartQHat[k] << std::endl;
+        }
+        ofs_PartQHat.close();
+
+        // Compute [QHat_j]_{q_i} and [QHat_j^{-1}]_{q_i}
+        // used in fast basis conversion
+        // BConv
+        m_PartQHatModq.resize(m_numPartQ);
+        m_PartQHatInvModq.resize(m_numPartQ);
+        for (uint32_t j = 0; j < m_numPartQ; j++) {
+            m_PartQHatModq[j].resize(sizeQ);
+            m_PartQHatInvModq[j].resize(sizeQ);
+            for (uint32_t i = 0; i < sizeQ; i++) {
+                m_PartQHatModq[j][i] = PartQHat[j].Mod(moduliQ[i]).ConvertToInt();
+                if (i >= j * a && i <= ((j + 1) * a - 1)) {
+                    m_PartQHatInvModq[j][i] = PartQHat[j].ModInverse(moduliQ[i]).ConvertToInt();
+                }
+            }
+        }
+
+        std::filesystem::path p("./ofhe_io/rns_decompose");
+
+        for (uint32_t j = 0; j < m_numPartQ; j++) {
+            std::ofstream ofs_QHatInvModqi("./ofhe_io/rns_decompose/QHatInvModqi_dnum_" + std::to_string(j) + ".mem");
+            for (usint k=0; k <  sizeQ; k++){
+                ofs_QHatInvModqi << m_PartQHatInvModq[j][k] << std::endl;
+            }
+            ofs_QHatInvModqi.close();
         }
 
         // Compute partitions of Q into numPartQ digits
@@ -131,6 +175,8 @@ void CryptoParametersRNS::PrecomputeCRTTables(KeySwitchTechnique ksTech, Scaling
                 maxBits = bits;
         }
         // Select number of primes in auxiliary CRT basis
+        /* Auxiliary Prime = Special Prime
+        AuxBits = 60 => ckksrns-cryptoparameters.cpp */
         sizeP              = ceil(static_cast<double>(maxBits) / auxBits);
         uint64_t primeStep = FindAuxPrimeStep();
 
@@ -147,7 +193,7 @@ void CryptoParametersRNS::PrecomputeCRTTables(KeySwitchTechnique ksTech, Scaling
             // The following loop makes sure that moduli in
             // P and Q are different
             bool foundInQ = false;
-            do {
+            do {    /* Find Prime p_i which doesn't exist in Q moduli */
                 moduliP[i] = PreviousPrime<NativeInteger>(pPrev, primeStep);
                 foundInQ   = false;
                 for (usint j = 0; j < sizeQ; j++)
@@ -176,6 +222,24 @@ void CryptoParametersRNS::PrecomputeCRTTables(KeySwitchTechnique ksTech, Scaling
         }
 
         m_paramsQP = std::make_shared<ILDCRTParams<BigInteger>>(2 * n, moduliQP, rootsQP);
+
+         // PRINT RNS MODULO
+        std::cout << "============ RNS MODULO ============\n";
+        for (size_t i=0; i< sizeQ+sizeP; i++){
+            std::cout << "m_paramsQP: " << i << std::endl;
+            std::cout << "modulus: " << m_paramsQP->GetParams()[i]->GetModulus() << "   root of unity: " << m_paramsQP->GetParams()[i]->GetRootOfUnity() << std::endl;
+        }
+        std::cout << "============ RNS MODULO ============\n\n";
+
+        // SAVE AS A FILE
+        std::ofstream modulo_file("./ofhe_io/ks/rns_modulo.mem");
+        std::ofstream rou_file("./ofhe_io/ks/rns_rootOfUnity.mem");
+        for(size_t i=0; i< sizeQ+sizeP; i++){
+            modulo_file << m_paramsQP->GetParams()[i]->GetModulus() << std::endl;
+            rou_file << m_paramsQP->GetParams()[i]->GetRootOfUnity() << std::endl;
+        }
+        modulo_file.close();
+        rou_file.close();
 
         // Pre-compute CRT::FFT values for P
         ChineseRemainderTransformFTT<NativeVector>().PreCompute(rootsP, 2 * n, moduliP);
@@ -233,6 +297,9 @@ void CryptoParametersRNS::PrecomputeCRTTables(KeySwitchTechnique ksTech, Scaling
             }
         }
 
+        /*
+         MOD-RAISE Q->P Part Parameter Pre-Computation 
+        */
         // Pre-compute compementary partitions for ModUp
         uint32_t alpha = ceil(static_cast<double>(sizeQ) / m_numPartQ);
         m_paramsComplPartQ.resize(sizeQ);
@@ -246,8 +313,9 @@ void CryptoParametersRNS::PrecomputeCRTTables(KeySwitchTechnique ksTech, Scaling
                 auto cyclOrder                                                 = digitPartition->GetCyclotomicOrder();
 
                 uint32_t sizePartQj = digitPartition->GetParams().size();
-                if (j == beta - 1)
+                if (j == beta - 1)  /* If this part is the last part */
                     sizePartQj = (l + 1) - j * alpha;
+                /* Compl PartQj Size */
                 uint32_t sizeComplPartQj = (l + 1) - sizePartQj + sizeP;
 
                 std::vector<NativeInteger> moduli(sizeComplPartQj);
@@ -256,7 +324,7 @@ void CryptoParametersRNS::PrecomputeCRTTables(KeySwitchTechnique ksTech, Scaling
                 for (uint32_t k = 0; k < sizeComplPartQj; k++) {
                     if (k < (l + 1) - sizePartQj) {
                         uint32_t currDigit = k / alpha;
-                        if (currDigit >= j)
+                        if (currDigit >= j)     /* If this Digit is partj Digit, push back */
                             currDigit++;
                         moduli[k] = GetParamsPartQ(currDigit)->GetParams()[k % alpha]->GetModulus();
                         roots[k]  = GetParamsPartQ(currDigit)->GetParams()[k % alpha]->GetRootOfUnity();
@@ -337,62 +405,6 @@ void CryptoParametersRNS::PrecomputeCRTTables(KeySwitchTechnique ksTech, Scaling
                     }
                 }
             }
-        }
-    }
-    /////////////////////////////////////
-    // BFVrns and BGVrns : Multiparty Decryption : ExpandCRTBasis
-    /////////////////////////////////////
-    if (GetMultipartyMode() == NOISE_FLOODING_MULTIPARTY) {
-        // Pre-compute values [*(Q/q_i/q_0)^{-1}]_{q_i}
-        BigInteger modulusQ = BigInteger(GetElementParams()->GetModulus()) / BigInteger(moduliQ[0]);
-        m_multipartyQHatInvModq.resize(sizeQ - 1);
-        m_multipartyQHatInvModqPrecon.resize(sizeQ - 1);
-        m_multipartyQHatModq0.resize(sizeQ - 1);
-        // l will run from 0 to size-2, but modulusQ values
-        // run from Q^(l-1) to Q^(0)
-        for (size_t l = 0, m = sizeQ - l - 2; l < sizeQ - 1; ++l, --m) {
-            if (l > 0)
-                modulusQ = modulusQ / BigInteger(moduliQ[sizeQ - l]);
-
-            m_multipartyQHatInvModq[m].resize(m + 1);
-            m_multipartyQHatInvModqPrecon[m].resize(m + 1);
-            m_multipartyQHatModq0[m].resize(1);
-            m_multipartyQHatModq0[m][0].resize(m + 1);
-            for (size_t i = 1; i < m + 2; i++) {
-                BigInteger QHati                        = modulusQ / BigInteger(moduliQ[i]);
-                BigInteger QHatInvModqi                 = QHati.ModInverse(moduliQ[i]);
-                m_multipartyQHatInvModq[m][i - 1]       = QHatInvModqi.ConvertToInt();
-                m_multipartyQHatInvModqPrecon[m][i - 1] = m_multipartyQHatInvModq[m][i - 1].PrepModMulConst(moduliQ[i]);
-                m_multipartyQHatModq0[m][0][i - 1]      = QHati.Mod(moduliQ[0]);
-            }
-        }
-
-        modulusQ = BigInteger(GetElementParams()->GetModulus()) / BigInteger(moduliQ[0]);
-        m_multipartyAlphaQModq0.resize(sizeQ - 1);
-        for (usint l = sizeQ - 1; l > 0; l--) {
-            if (l < sizeQ - 1)
-                modulusQ = modulusQ / BigInteger(moduliQ[l + 1]);
-            m_multipartyAlphaQModq0[l - 1].resize(l + 1);
-            NativeInteger QlModq0 = modulusQ.Mod(moduliQ[0]).ConvertToInt();
-            for (usint j = 0; j < l + 1; ++j) {
-                m_multipartyAlphaQModq0[l - 1][j] = {QlModq0.ModMul(NativeInteger(j), moduliQ[0])};
-            }
-        }
-
-        // Barrett modulo reduction precomputation for q_0
-        const BigInteger BarrettBase128Bit("340282366920938463463374607431768211456");  // 2^128
-        const BigInteger TwoPower64("18446744073709551616");                            // 2^64
-        m_multipartyModq0BarrettMu.resize(1);
-        BigInteger mu = BarrettBase128Bit / BigInteger(moduliQ[0]);
-        uint64_t val[2];
-        val[0] = (mu % TwoPower64).ConvertToInt();
-        val[1] = mu.RShift(64).ConvertToInt();
-        memcpy(&m_multipartyModq0BarrettMu[0], val, sizeof(DoubleNativeInt));
-
-        // Stores \frac{1/q_i}
-        m_multipartyQInv.resize(sizeQ - 1);
-        for (size_t i = 1; i < sizeQ; i++) {
-            m_multipartyQInv[i - 1] = 1. / static_cast<double>(moduliQ[i].ConvertToInt());
         }
     }
 }

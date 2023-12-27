@@ -153,15 +153,6 @@ public:
     // PARAMETER GENERATION WRAPPER
     //------------------------------------------------------------------------------
 
-    virtual bool ParamsGenBFVRNS(std::shared_ptr<CryptoParametersBase<Element>> cryptoParams, uint32_t evalAddCount,
-                                 uint32_t multiplicativeDepth, uint32_t keySwitchCount, size_t dcrtBits, uint32_t n,
-                                 uint32_t numPartQ) const {
-        if (!m_ParamsGen)
-            OPENFHE_THROW(config_error, "m_ParamsGen is nullptr");
-        return m_ParamsGen->ParamsGenBFVRNS(cryptoParams, evalAddCount, multiplicativeDepth, keySwitchCount, dcrtBits,
-                                            n, numPartQ);
-    }
-
     virtual bool ParamsGenCKKSRNS(std::shared_ptr<CryptoParametersBase<Element>> cryptoParams, usint cyclOrder,
                                   usint numPrimes, usint scalingModSize, usint firstModSize, uint32_t numPartQ,
                                   COMPRESSION_LEVEL mPIntBootCiphertextCompressionLevel) const {
@@ -169,15 +160,6 @@ public:
             OPENFHE_THROW(config_error, "m_ParamsGen is nullptr");
         return m_ParamsGen->ParamsGenCKKSRNS(cryptoParams, cyclOrder, numPrimes, scalingModSize, firstModSize, numPartQ,
                                              mPIntBootCiphertextCompressionLevel);
-    }
-
-    virtual bool ParamsGenBGVRNS(std::shared_ptr<CryptoParametersBase<DCRTPoly>> cryptoParams, uint32_t evalAddCount,
-                                 uint32_t keySwitchCount, usint cyclOrder, usint numPrimes, usint firstModSize,
-                                 usint dcrtBits, uint32_t numPartQ, usint multihopQBound) const {
-        if (!m_ParamsGen)
-            OPENFHE_THROW(config_error, "m_ParamsGen is nullptr");
-        return m_ParamsGen->ParamsGenBGVRNS(cryptoParams, evalAddCount, keySwitchCount, cyclOrder, numPrimes,
-                                            firstModSize, dcrtBits, numPartQ, multihopQBound);
     }
 
     /////////////////////////////////////////

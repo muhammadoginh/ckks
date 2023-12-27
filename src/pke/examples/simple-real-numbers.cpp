@@ -36,10 +36,83 @@
 #define PROFILE
 
 #include "openfhe.h"
+#include <filesystem>
 
 using namespace lbcrypto;
 
 int main() {
+
+
+    // I/O FILE DIRCETORY RESET / GENERATION
+    std::filesystem::path p_ofhe_io("./ofhe_io");
+    if(std::filesystem::exists(p_ofhe_io)) std::filesystem::remove_all(p_ofhe_io);  // Remove all IO files
+    std::filesystem::create_directory(p_ofhe_io);    
+
+    std::filesystem::path p_key_mult("./ofhe_io/key_mult");
+    std::filesystem::create_directory(p_key_mult);
+
+    std::filesystem::path p_key_mult_key_switching_key("./ofhe_io/key_mult/key_switching_key");
+    std::filesystem::create_directory(p_key_mult_key_switching_key);
+    std::filesystem::path p_key_mult_output("./ofhe_io/key_mult/output");
+    std::filesystem::create_directory(p_key_mult_output);  
+
+    std::filesystem::path p_mult("./ofhe_io/mult");
+    std::filesystem::create_directory(p_mult);
+    std::filesystem::path p_mult_input("./ofhe_io/mult/input");
+    std::filesystem::create_directory(p_mult_input);
+
+    std::filesystem::path p_ks("./ofhe_io/ks");
+    std::filesystem::create_directory(p_ks);
+    std::filesystem::path p_ks_input("./ofhe_io/ks/input");
+    std::filesystem::create_directory(p_ks_input);
+    std::filesystem::path p_ks_output("./ofhe_io/ks/output");
+    std::filesystem::create_directory(p_ks_output);
+
+    std::filesystem::path p_mod_up("./ofhe_io/mod_up");
+    std::filesystem::create_directory(p_mod_up);
+    std::filesystem::path p_mod_up_bconv_in("./ofhe_io/mod_up/bconv_in");
+    std::filesystem::create_directory(p_mod_up_bconv_in);
+    std::filesystem::path p_mod_up_bconv_out("./ofhe_io/mod_up/bconv_out");
+    std::filesystem::create_directory(p_mod_up_bconv_out);
+    std::filesystem::path p_mod_up_bconv_param("./ofhe_io/mod_up/bconv_param");
+    std::filesystem::create_directory(p_mod_up_bconv_param);
+    std::filesystem::path p_mod_up_bconv_param_PartQlHat_inv_modqi("./ofhe_io/mod_up/bconv_param/PartQlHat_inv_modqi");
+    std::filesystem::create_directory(p_mod_up_bconv_param_PartQlHat_inv_modqi);
+    std::filesystem::path p_mod_up_bconv_param_PartQlHatModpi("./ofhe_io/mod_up/bconv_param/PartQlHatModpi");
+    std::filesystem::create_directory(p_mod_up_bconv_param_PartQlHatModpi);
+    std::filesystem::path p_mod_up_modup_in("./ofhe_io/mod_up/input");
+    std::filesystem::create_directory(p_mod_up_modup_in);
+    std::filesystem::path p_mod_up_modup_out("./ofhe_io/mod_up/output");
+    std::filesystem::create_directory(p_mod_up_modup_out);
+
+    std::filesystem::path p_mod_down("./ofhe_io/mod_down");
+    std::filesystem::create_directory(p_mod_down);
+    std::filesystem::path p_mod_down_output("./ofhe_io/mod_down/output");
+    std::filesystem::create_directory(p_mod_down_output);
+    std::filesystem::path p_mod_down_bconv_in("./ofhe_io/mod_down/bconv_in");
+    std::filesystem::create_directory(p_mod_down_bconv_in);
+    std::filesystem::path p_mod_down_bconv_out("./ofhe_io/mod_down/bconv_out");
+    std::filesystem::create_directory(p_mod_down_bconv_out);
+    std::filesystem::path p_mod_down_subtraction("./ofhe_io/mod_down/subtraction");
+    std::filesystem::create_directory(p_mod_down_subtraction);
+    std::filesystem::path p_mod_down_subtraction_in("./ofhe_io/mod_down/subtraction/input");
+    std::filesystem::create_directory(p_mod_down_subtraction_in);
+    std::filesystem::path p_mod_down_subtraction_out("./ofhe_io/mod_down/subtraction/output");
+    std::filesystem::create_directory(p_mod_down_subtraction_out);
+    std::filesystem::path p_mod_down_subtraction_param("./ofhe_io/mod_down/subtraction/param");
+    std::filesystem::create_directory(p_mod_down_subtraction_param);
+    std::filesystem::path p_mod_down_bconv_param("./ofhe_io/mod_down/bconv_param");
+    std::filesystem::create_directory(p_mod_down_bconv_param);
+    std::filesystem::path p_mod_down_bconv_param_PHatInvModpi("./ofhe_io/mod_down/bconv_param/PHatInvModpi");
+    std::filesystem::create_directory(p_mod_down_bconv_param_PHatInvModpi);
+    std::filesystem::path p_mod_down_bconv_param_PHatModqi("./ofhe_io/mod_down/bconv_param/PHatModqi");
+    std::filesystem::create_directory(p_mod_down_bconv_param_PHatModqi);
+    
+
+    std::filesystem::path p_rns_decompose("./ofhe_io/rns_decompose");
+    std::filesystem::create_directory(p_rns_decompose);
+
+
     // Step 1: Setup CryptoContext
 
     // A. Specify main parameters
@@ -83,7 +156,7 @@ int main() {
    * scaling factor should be large enough to both accommodate this noise and
    * support results that match the desired accuracy.
    */
-    uint32_t scaleModSize = 50;
+    uint32_t scaleModSize = 10;
 
     /* A3) Number of plaintext slots used in the ciphertext.
    * CKKS packs multiple plaintext values in each ciphertext.
@@ -97,7 +170,7 @@ int main() {
    * being used for these parameters. Give ring dimension N, the maximum batch
    * size is N/2, because of the way CKKS works.
    */
-    uint32_t batchSize = 8;
+    uint32_t batchSize = 1; // originally 8
 
     /* A4) Desired security level based on FHE standards.
    * This parameter can take four values. Three of the possible values
@@ -118,14 +191,15 @@ int main() {
     parameters.SetMultiplicativeDepth(multDepth);
     parameters.SetScalingModSize(scaleModSize);
     parameters.SetBatchSize(batchSize);
+    parameters.SetRingDim(4);
 
     CryptoContext<DCRTPoly> cc = GenCryptoContext(parameters);
+    // this code use src\pke\lib\schemerns\rns-cryptoparameters.cpp
 
     // Enable the features that you wish to use
-    cc->Enable(PKE);
-    cc->Enable(KEYSWITCH);
-    cc->Enable(LEVELEDSHE);
-    std::cout << "CKKS scheme is using ring dimension " << cc->GetRingDimension() << std::endl << std::endl;
+    cc->Enable(PKE);  // this is for KeyGen operation
+    cc->Enable(KEYSWITCH); // this line to enable keyswitching
+    cc->Enable(LEVELEDSHE); // this is for EvalMultKeyGen operation
 
     // B. Step 2: Key Generation
     /* B1) Generate encryption keys.
@@ -164,88 +238,94 @@ int main() {
    * in the output of this demo, since CKKS is approximate, zeros are not exact
    * - they're just very small numbers.
    */
-    cc->EvalRotateKeyGen(keys.secretKey, {1, -2});
+    // cc->EvalRotateKeyGen(keys.secretKey, {1, -2});
 
     // Step 3: Encoding and encryption of inputs
 
     // Inputs
-    std::vector<double> x1 = {0.125, 0.7, 0.73, 1.0, 2.0, 3.0, 4.0, 5.0};
-    std::vector<double> x2 = {5.1, 4.3, 3.1, 2.0, 1.0, 0.75, 0.5, 0.25};
+    std::vector<double> m1 = {0.4};
+    std::vector<double> m2 = {0.5};
 
     // Encoding as plaintexts
-    Plaintext ptxt1 = cc->MakeCKKSPackedPlaintext(x1);
-    Plaintext ptxt2 = cc->MakeCKKSPackedPlaintext(x2);
+    Plaintext ptxt1 = cc->MakeCKKSPackedPlaintext(m1);
+    Plaintext ptxt2 = cc->MakeCKKSPackedPlaintext(m2);
 
-    std::cout << "Input x1: " << ptxt1 << std::endl;
-    std::cout << "Input x2: " << ptxt2 << std::endl;
+    // PRINTING Plaintext Parameters
+    std::cout << "============ PlainText Parameters ============" << std::endl;
+    std::cout << "CKKS scheme is using ring dimension " << cc->GetRingDimension() << std::endl << std::endl;
+    std::cout << "Current LEVEL: " << multDepth - ptxt1->GetLevel() << std::endl;
+    std::cout << "============ PlainText Parameters ============" << std::endl << std::endl;
 
-    // Encrypt the encoded vectors
+    std::cout << "Input m1: " << ptxt1 << std::endl;
+    std::cout << "Input m2: " << ptxt2 << std::endl;
+
+    // Client Encrypt a the encoded vectors
     auto c1 = cc->Encrypt(keys.publicKey, ptxt1);
     auto c2 = cc->Encrypt(keys.publicKey, ptxt2);
 
+    // PRINTING Ciphertext Parameters
+    std::cout << "============ CipherText Parameters ============" << std::endl;
+
+    // PRINT OUT KEY SWITCHING KEY
+
+    auto const ksw = cc->GetEvalMultKeyVector(c1->GetKeyTag());
+
     // Step 4: Evaluation
 
-    // Homomorphic addition
-    auto cAdd = cc->EvalAdd(c1, c2);
+    // Homomorphic multiplication with keyswitching
+    // auto cMul = cc->EvalMult(c1, c2);
+    // // std::cout << "cMul :" << cMul << std::endl; 
+    // std::ofstream cMul_file ("content_of_cMul.txt");
+    // cMul_file << "cMul: \n" << cMul << std::endl; 
+    // cMul_file.close();
 
-    // Homomorphic subtraction
-    auto cSub = cc->EvalSub(c1, c2);
-
-    // Homomorphic scalar multiplication
-    auto cScalar = cc->EvalMult(c1, 4.0);
-
-    // Homomorphic multiplication
+    // Homomorphic multiplication without keyswitching
     auto cMul = cc->EvalMult(c1, c2);
-
-    // Homomorphic rotations
-    auto cRot1 = cc->EvalRotate(c1, 1);
-    auto cRot2 = cc->EvalRotate(c1, -2);
+    // std::cout << "cMul :" << cMul << std::endl; 
+    // std::ofstream cMul_file ("content_of_cMul_without_keySwitching.txt");
+    // cMul_file << "cMul: \n" << cMul << std::endl; 
+    // cMul_file.close();
 
     // Step 5: Decryption and output
     Plaintext result;
-    // We set the cout precision to 8 decimal digits for a nicer output.
+    // We set the cout precision to 4 decimal digits for a nicer output.
     // If you want to see the error/noise introduced by CKKS, bump it up
     // to 15 and it should become visible.
-    std::cout.precision(8);
+    std::cout.precision(4);
 
     std::cout << std::endl << "Results of homomorphic computations: " << std::endl;
 
     cc->Decrypt(keys.secretKey, c1, &result);
     result->SetLength(batchSize);
-    std::cout << "x1 = " << result;
-    std::cout << "Estimated precision in bits: " << result->GetLogPrecision() << std::endl;
+    std::cout << "m1 = " << result;
 
-    // Decrypt the result of addition
-    cc->Decrypt(keys.secretKey, cAdd, &result);
+    cc->Decrypt(keys.secretKey, c2, &result);
     result->SetLength(batchSize);
-    std::cout << "x1 + x2 = " << result;
-    std::cout << "Estimated precision in bits: " << result->GetLogPrecision() << std::endl;
-
-    // Decrypt the result of subtraction
-    cc->Decrypt(keys.secretKey, cSub, &result);
-    result->SetLength(batchSize);
-    std::cout << "x1 - x2 = " << result << std::endl;
-
-    // Decrypt the result of scalar multiplication
-    cc->Decrypt(keys.secretKey, cScalar, &result);
-    result->SetLength(batchSize);
-    std::cout << "4 * x1 = " << result << std::endl;
+    std::cout << "m2 = " << result;
 
     // Decrypt the result of multiplication
     cc->Decrypt(keys.secretKey, cMul, &result);
     result->SetLength(batchSize);
-    std::cout << "x1 * x2 = " << result << std::endl;
-
-    // Decrypt the result of rotations
-
-    cc->Decrypt(keys.secretKey, cRot1, &result);
-    result->SetLength(batchSize);
-    std::cout << std::endl << "In rotations, very small outputs (~10^-10 here) correspond to 0's:" << std::endl;
-    std::cout << "x1 rotate by 1 = " << result << std::endl;
-
-    cc->Decrypt(keys.secretKey, cRot2, &result);
-    result->SetLength(batchSize);
-    std::cout << "x1 rotate by -2 = " << result << std::endl;
+    std::cout << "m1 * m2 = " << result << std::endl;
 
     return 0;
 }
+
+/*
+1. EvalMult
+pke/schemebase/base-scheme.h
+    pke/lib/schemebase/base-leveledshe.cpp
+
+2. ptxt->GetEncodingParams()
+pke/include/encoding/encodingparams.h
+
+p = plaintext modulus that is used by all schemes
+rootP = root of unity for plaintext modulus
+bigP = big plaintext modulus that is used for arbitrary cyclotomics
+rootBigP = root of unity for big plaintext modulus
+g = plaintext generator is used for packed encoding (to find the correct automorphism index)
+L = maximum batch size used by EvalSumKeyGen for packed encoding
+
+
+*/
+

@@ -199,18 +199,94 @@ template <class Element>
 Ciphertext<Element> LeveledSHEBase<Element>::EvalMult(ConstCiphertext<Element> ciphertext1,
                                                       ConstCiphertext<Element> ciphertext2,
                                                       const EvalKey<Element> evalKey) const {
+    
+    
+    // save to file
+    std::ofstream mult_in_x0("./ofhe_io/mult/input/mult_in_x0.mem");
+    std::ofstream mult_in_x1("./ofhe_io/mult/input/mult_in_x1.mem");
+    std::ofstream mult_in_y0("./ofhe_io/mult/input/mult_in_y0.mem");
+    std::ofstream mult_in_y1("./ofhe_io/mult/input/mult_in_y1.mem");
+
+    auto cipher_x = ciphertext1->GetElements();
+    auto cipher_y = ciphertext2->GetElements();
+
+    for (usint j=0; j < cipher_x[0].GetAllElements().size(); j++){
+        for (usint k=0; k< cipher_x[0].GetAllElements()[0].GetLength(); k++){
+            mult_in_x0 << cipher_x[0].GetAllElements()[j][k] << ' ';
+            mult_in_x1 << cipher_x[1].GetAllElements()[j][k] << ' ';
+            mult_in_y0 << cipher_y[0].GetAllElements()[j][k] << ' ';
+            mult_in_y1 << cipher_y[1].GetAllElements()[j][k] << ' ';
+        }
+        mult_in_x0 << std::endl;
+        mult_in_x1 << std::endl;
+        mult_in_y0 << std::endl;
+        mult_in_y1 << std::endl;
+    }
+
+    mult_in_x0.close();
+    mult_in_x1.close();
+    mult_in_y0.close();
+    mult_in_y1.close();
+
     Ciphertext<Element> ciphertext = EvalMult(ciphertext1, ciphertext2);
 
+    // Chulwoo: Can't understand why NTT after EvalMult... looks useless
     std::vector<Element>& cv = ciphertext->GetElements();
     for (auto& c : cv)
-        c.SetFormat(Format::EVALUATION);
+        c.SetFormat(Format::EVALUATION);    // NTT ?
 
     auto algo = ciphertext->GetCryptoContext()->GetScheme();
 
+    // PRINT KS INPUT
+    std::cout << "============ Key Switch INPUT ============\n";
+
+    std::ofstream ks_in_c0("./ofhe_io/ks/input/ks_in_c0.mem");
+    std::ofstream ks_in_c1("./ofhe_io/ks/input/ks_in_c1.mem");
+    std::ofstream ks_in_c2("./ofhe_io/ks/input/ks_in_c2.mem");
+    for (usint j=0; j < cv[0].GetAllElements().size(); j++){
+        for (usint k=0; k< cv[0].GetAllElements()[0].GetLength(); k++){
+            ks_in_c0 << cv[0].GetAllElements()[j][k] << ' ';
+            ks_in_c1 << cv[1].GetAllElements()[j][k] << ' ';
+            ks_in_c2 << cv[2].GetAllElements()[j][k] << ' ';
+        }
+        ks_in_c0 << std::endl;
+        ks_in_c1 << std::endl;
+        ks_in_c2 << std::endl;
+    }
+    ks_in_c0.close();
+    ks_in_c1.close();
+    ks_in_c2.close();
+
+    // std::cout << cv[2] << std::endl;
+    std::cout << "============ Key Switch INPUT ============\n\n";
+
+    // measuring key switching time
+    auto time_start_ks = std::chrono::steady_clock::now();
     std::shared_ptr<std::vector<Element>> ab = algo->KeySwitchCore(cv[2], evalKey);
+    auto time_end_ks = std::chrono::steady_clock::now();
+
+    // std::cout.clear(); // ENABLE COUOT
+    std::cout << "KS TIME is : " << std::chrono::duration_cast<std::chrono::microseconds>(time_end_ks - time_start_ks).count() << " us \n";
+
+    std::cout << "============ Key Switch OUTPUT ============\n";
+    // std::cout << *ab << std::endl;
+
 
     cv[0] += (*ab)[0];
     cv[1] += (*ab)[1];
+
+    std::ofstream ks_out_c0("./ofhe_io/ks/output/ks_out_c0.mem");
+    std::ofstream ks_out_c1("./ofhe_io/ks/output/ks_out_c1.mem");
+    for (usint j=0; j < cv[0].GetAllElements().size(); j++){
+        for (usint k=0; k< cv[0].GetAllElements()[0].GetLength(); k++){
+            ks_out_c0 << cv[0].GetAllElements()[j][k] << ' ';
+            ks_out_c1 << cv[1].GetAllElements()[j][k] << ' ';
+        }
+        ks_out_c0 << std::endl;
+        ks_out_c1 << std::endl;
+    }
+    ks_out_c0.close();
+    ks_out_c1.close();
 
     cv.resize(2);
 
