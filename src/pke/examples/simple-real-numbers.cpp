@@ -133,7 +133,7 @@ int main() {
    * For performance reasons, it's generally preferable to perform operations
    * in the shorted multiplicative depth possible.
    */
-    uint32_t multDepth = 1;
+    uint32_t multDepth = 2; // this is the same as level
 
     /* A2) Bit-length of scaling factor.
    * CKKS works for real numbers, but these numbers are encoded as integers.
@@ -156,7 +156,7 @@ int main() {
    * scaling factor should be large enough to both accommodate this noise and
    * support results that match the desired accuracy.
    */
-    uint32_t scaleModSize = 10;
+    uint32_t scaleModSize = 20;
 
     /* A3) Number of plaintext slots used in the ciphertext.
    * CKKS packs multiple plaintext values in each ciphertext.
@@ -191,14 +191,14 @@ int main() {
     parameters.SetMultiplicativeDepth(multDepth);
     parameters.SetScalingModSize(scaleModSize);
     parameters.SetBatchSize(batchSize);
-    parameters.SetRingDim(4);
+    // parameters.SetRingDim(4);
 
     CryptoContext<DCRTPoly> cc = GenCryptoContext(parameters);
     // this code use src\pke\lib\schemerns\rns-cryptoparameters.cpp
 
     // Enable the features that you wish to use
     cc->Enable(PKE);  // this is for KeyGen operation
-    cc->Enable(KEYSWITCH); // this line to enable keyswitching
+    cc->Enable(KEYSWITCH); // this line to enable keyswitching, by default OpenFHE use HYBRID key switching 
     cc->Enable(LEVELEDSHE); // this is for EvalMultKeyGen operation
 
     // B. Step 2: Key Generation
@@ -251,13 +251,17 @@ int main() {
     Plaintext ptxt2 = cc->MakeCKKSPackedPlaintext(m2);
 
     // PRINTING Plaintext Parameters
+    std::cout << "Input m1: " << m1 << std::endl;
+    std::cout << "Input m2: " << m2 << std::endl;
+
     std::cout << "============ PlainText Parameters ============" << std::endl;
-    std::cout << "CKKS scheme is using ring dimension " << cc->GetRingDimension() << std::endl << std::endl;
-    std::cout << "Current LEVEL: " << multDepth - ptxt1->GetLevel() << std::endl;
+    std::cout << "CKKS scheme is using ring dimension " << cc->GetRingDimension() << std::endl;
+    std::cout << "Current MultDepth: " << multDepth - ptxt1->GetLevel() << std::endl;
+    std::cout << "Scaling Factor: " << ptxt1->GetScalingFactor() << std::endl;
     std::cout << "============ PlainText Parameters ============" << std::endl << std::endl;
 
-    std::cout << "Input m1: " << ptxt1 << std::endl;
-    std::cout << "Input m2: " << ptxt2 << std::endl;
+    // std::cout << "Plaintext m1: " << ptxt1->GetElements() << std::endl;
+    // std::cout << "Plaintext m2: " << ptxt2->GetElement() << std::endl;
 
     // Client Encrypt a the encoded vectors
     auto c1 = cc->Encrypt(keys.publicKey, ptxt1);
@@ -272,14 +276,8 @@ int main() {
 
     // Step 4: Evaluation
 
-    // Homomorphic multiplication with keyswitching
-    // auto cMul = cc->EvalMult(c1, c2);
-    // // std::cout << "cMul :" << cMul << std::endl; 
-    // std::ofstream cMul_file ("content_of_cMul.txt");
-    // cMul_file << "cMul: \n" << cMul << std::endl; 
-    // cMul_file.close();
 
-    // Homomorphic multiplication without keyswitching
+    // Homomorphic multiplication
     auto cMul = cc->EvalMult(c1, c2);
     // std::cout << "cMul :" << cMul << std::endl; 
     // std::ofstream cMul_file ("content_of_cMul_without_keySwitching.txt");

@@ -201,6 +201,9 @@ Ciphertext<Element> LeveledSHEBase<Element>::EvalMult(ConstCiphertext<Element> c
                                                       const EvalKey<Element> evalKey) const {
     
     
+    std::cout << "============= evalKey ============ " << std::endl;
+    std::cout << "evalKey: " << evalKey << std::endl;
+
     // save to file
     std::ofstream mult_in_x0("./ofhe_io/mult/input/mult_in_x0.mem");
     std::ofstream mult_in_x1("./ofhe_io/mult/input/mult_in_x1.mem");
@@ -225,21 +228,36 @@ Ciphertext<Element> LeveledSHEBase<Element>::EvalMult(ConstCiphertext<Element> c
 
     mult_in_x0.close();
     mult_in_x1.close();
-    mult_in_y0.close();
+    mult_in_y0.close();    
     mult_in_y1.close();
 
-    Ciphertext<Element> ciphertext = EvalMult(ciphertext1, ciphertext2);
+    Ciphertext<Element> ciphertext = EvalMult(ciphertext1, ciphertext2);    
+    // we get three elements of ciphertext after multiplication
 
     // Chulwoo: Can't understand why NTT after EvalMult... looks useless
-    std::vector<Element>& cv = ciphertext->GetElements();
-    for (auto& c : cv)
+    // Retrieve Elements from Ciphertext:
+    std::vector<Element>& cv = ciphertext->GetElements();   
+    // we store every elemen in ciphertext vector
+    // Each element likely represents a coefficient of a polynomial in a coefficient representation
+    // std::cout << "============== before format evaluation ==============" << std::endl;
+    // std::cout << "cv: " << cv << std::endl;
+
+    // For each element c, it sets the format to Format::EVALUATION. This may involve transforming 
+    // the element from coefficient representation to evaluation representation.
+    // std::cout << "============== after format evaluation ==============" << std::endl;
+    for (auto& c : cv) {
         c.SetFormat(Format::EVALUATION);    // NTT ?
+        // std::cout << "cv: " << c << std::endl;
+    }
 
     auto algo = ciphertext->GetCryptoContext()->GetScheme();
+    // std::cout << "algo: " << algo << std::endl;
+    // the value of algo changes every time an operation is performed
 
     // PRINT KS INPUT
-    std::cout << "============ Key Switch INPUT ============\n";
+    // std::cout << "============ Key Switch INPUT ============\n";
 
+    // save output from multiplication process (KS INPUT) to the file
     std::ofstream ks_in_c0("./ofhe_io/ks/input/ks_in_c0.mem");
     std::ofstream ks_in_c1("./ofhe_io/ks/input/ks_in_c1.mem");
     std::ofstream ks_in_c2("./ofhe_io/ks/input/ks_in_c2.mem");
@@ -258,7 +276,8 @@ Ciphertext<Element> LeveledSHEBase<Element>::EvalMult(ConstCiphertext<Element> c
     ks_in_c2.close();
 
     // std::cout << cv[2] << std::endl;
-    std::cout << "============ Key Switch INPUT ============\n\n";
+    std::cout << "============ Key Switching Start ============\n\n";
+
 
     // measuring key switching time
     auto time_start_ks = std::chrono::steady_clock::now();
@@ -268,8 +287,8 @@ Ciphertext<Element> LeveledSHEBase<Element>::EvalMult(ConstCiphertext<Element> c
     // std::cout.clear(); // ENABLE COUOT
     std::cout << "KS TIME is : " << std::chrono::duration_cast<std::chrono::microseconds>(time_end_ks - time_start_ks).count() << " us \n";
 
-    std::cout << "============ Key Switch OUTPUT ============\n";
-    // std::cout << *ab << std::endl;
+    std::cout << "============ Key Switching End ============\n";
+    // std::cout << *ab << std::endl;  // EvK0, EvK1
 
 
     cv[0] += (*ab)[0];

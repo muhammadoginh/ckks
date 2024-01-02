@@ -39,6 +39,11 @@ Base class for Lattice-based cryptography(LBC) Somewhat Homomorphic Encryption(S
 #include "ciphertext.h"
 #include "key/evalkey.h"
 
+// defines a templated KeySwitchBase class in the lbcrypto namespace
+// Inside the class, there's a member function KeySwitch, which takes a 
+// constant ciphertext (ConstCiphertext<Element>) and an evaluation key 
+// (EvalKey<Element>) as input. It returns a new ciphertext 
+
 namespace lbcrypto {
 
 template <typename Element>

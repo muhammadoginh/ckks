@@ -224,12 +224,12 @@ void CryptoParametersRNS::PrecomputeCRTTables(KeySwitchTechnique ksTech, Scaling
         m_paramsQP = std::make_shared<ILDCRTParams<BigInteger>>(2 * n, moduliQP, rootsQP);
 
          // PRINT RNS MODULO
-        std::cout << "============ RNS MODULO ============\n";
-        for (size_t i=0; i< sizeQ+sizeP; i++){
-            std::cout << "m_paramsQP: " << i << std::endl;
-            std::cout << "modulus: " << m_paramsQP->GetParams()[i]->GetModulus() << "   root of unity: " << m_paramsQP->GetParams()[i]->GetRootOfUnity() << std::endl;
-        }
-        std::cout << "============ RNS MODULO ============\n\n";
+        // std::cout << "============ RNS MODULO ============\n";
+        // for (size_t i=0; i< sizeQ+sizeP; i++){
+        //     std::cout << "m_paramsQP: " << i << std::endl;
+        //     std::cout << "modulus: " << m_paramsQP->GetParams()[i]->GetModulus() << "   root of unity: " << m_paramsQP->GetParams()[i]->GetRootOfUnity() << std::endl;
+        // }
+        // std::cout << "============ RNS MODULO ============\n\n";
 
         // SAVE AS A FILE
         std::ofstream modulo_file("./ofhe_io/ks/rns_modulo.mem");

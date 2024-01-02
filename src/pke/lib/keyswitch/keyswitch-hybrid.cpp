@@ -48,6 +48,7 @@ namespace lbcrypto {
 EvalKey<DCRTPoly> KeySwitchHYBRID::KeySwitchGenInternal(const PrivateKey<DCRTPoly> oldKey,
                                                         const PrivateKey<DCRTPoly> newKey) const {
     return KeySwitchHYBRID::KeySwitchGenInternal(oldKey, newKey, nullptr);
+    // std::cout << "============== KeySwitchHYBRID::KeySwitchGenInternal ============" << std::endl;
 }
 
 EvalKey<DCRTPoly> KeySwitchHYBRID::KeySwitchGenInternal(const PrivateKey<DCRTPoly> oldKey,
@@ -211,6 +212,7 @@ EvalKey<DCRTPoly> KeySwitchHYBRID::KeySwitchGenInternal(const PrivateKey<DCRTPol
 }
 
 void KeySwitchHYBRID::KeySwitchInPlace(Ciphertext<DCRTPoly>& ciphertext, const EvalKey<DCRTPoly> ek) const {
+    std::cout << "============== KeySwitchHYBRID::KeySwitchInPlace ============" << std::endl;
     std::vector<DCRTPoly>& cv = ciphertext->GetElements();
 
     std::shared_ptr<std::vector<DCRTPoly>> ba = (cv.size() == 2) ? KeySwitchCore(cv[1], ek) : KeySwitchCore(cv[2], ek);
@@ -226,9 +228,14 @@ void KeySwitchHYBRID::KeySwitchInPlace(Ciphertext<DCRTPoly>& ciphertext, const E
         cv[1] = (*ba)[1];
     }
     cv.resize(2);
+
+    // print 
+    std::cout << "============== KeySwitchHYBRID::KeySwitchInPlace ============" << std::endl;
+    std::cout << "check: " << cv << std::endl;
 }
 
 Ciphertext<DCRTPoly> KeySwitchHYBRID::KeySwitchExt(ConstCiphertext<DCRTPoly> ciphertext, bool addFirst) const {
+    std::cout << "============== KeySwitchHYBRID::KeySwitchExt ============" << std::endl;
     const auto cryptoParams = std::dynamic_pointer_cast<CryptoParametersCKKSRNS>(ciphertext->GetCryptoParameters());
 
     const std::vector<DCRTPoly>& cv = ciphertext->GetElements();
@@ -256,6 +263,7 @@ Ciphertext<DCRTPoly> KeySwitchHYBRID::KeySwitchExt(ConstCiphertext<DCRTPoly> cip
 }
 
 Ciphertext<DCRTPoly> KeySwitchHYBRID::KeySwitchDown(ConstCiphertext<DCRTPoly> ciphertext) const {
+    std::cout << "============== KeySwitchHYBRID::KeySwitchDown ============" << std::endl;
     const auto cryptoParams = std::dynamic_pointer_cast<CryptoParametersCKKSRNS>(ciphertext->GetCryptoParameters());
 
     const auto paramsP   = cryptoParams->GetParamsP();
@@ -293,6 +301,7 @@ Ciphertext<DCRTPoly> KeySwitchHYBRID::KeySwitchDown(ConstCiphertext<DCRTPoly> ci
 }
 
 DCRTPoly KeySwitchHYBRID::KeySwitchDownFirstElement(ConstCiphertext<DCRTPoly> ciphertext) const {
+    // std::cout << "============== KeySwitchHYBRID::KeySwitchDownFirstElement ============" << std::endl;
     const auto cryptoParams = std::dynamic_pointer_cast<CryptoParametersCKKSRNS>(ciphertext->GetCryptoParameters());
 
     const std::vector<DCRTPoly>& cTilda = ciphertext->GetElements();
@@ -323,13 +332,18 @@ DCRTPoly KeySwitchHYBRID::KeySwitchDownFirstElement(ConstCiphertext<DCRTPoly> ci
 
 std::shared_ptr<std::vector<DCRTPoly>> KeySwitchHYBRID::KeySwitchCore(const DCRTPoly& a,
                                                                       const EvalKey<DCRTPoly> evalKey) const {
+    std::cout << "============== KeySwitchHYBRID::KeySwitchCore ============" << std::endl;
+    std::cout << "evalKey: " << evalKey << std::endl;
     return EvalFastKeySwitchCore(EvalKeySwitchPrecomputeCore(a, evalKey->GetCryptoParameters()), evalKey,
                                  a.GetParams());
 }
 
 std::shared_ptr<std::vector<DCRTPoly>> KeySwitchHYBRID::EvalKeySwitchPrecomputeCore(
     const DCRTPoly& c, std::shared_ptr<CryptoParametersBase<DCRTPoly>> cryptoParamsBase) const {
+    std::cout << "============== KeySwitchHYBRID::EvalKeySwitchPrecomputeCore ============" << std::endl;
+    std::cout << "cv: " << c << std::endl;
     const auto cryptoParams = std::dynamic_pointer_cast<CryptoParametersRNS>(cryptoParamsBase);
+    std::cout << "cryptoParams: " << cryptoParams << std::endl;
 
     const std::shared_ptr<ParmType> paramsQl  = c.GetParams();
     const std::shared_ptr<ParmType> paramsP   = cryptoParams->GetParamsP();
@@ -350,7 +364,7 @@ std::shared_ptr<std::vector<DCRTPoly>> KeySwitchHYBRID::EvalKeySwitchPrecomputeC
     // Digit decomposition
     // Zero-padding and split
     for (uint32_t part = 0; part < numPartQl; part++) {
-        if (part == numPartQl - 1) {
+        if (part == numPartQl - 1) { 
             auto paramsPartQ = cryptoParams->GetParamsPartQ(part);
 
             uint32_t sizePartQl = sizeQl - alpha * part;
@@ -366,6 +380,8 @@ std::shared_ptr<std::vector<DCRTPoly>> KeySwitchHYBRID::EvalKeySwitchPrecomputeC
             auto params = DCRTPoly::Params(paramsPartQ->GetCyclotomicOrder(), moduli, roots, {}, {}, 0);
 
             partsCt[part] = DCRTPoly(std::make_shared<ParmType>(params), Format::EVALUATION, true);
+            std::cout << "cpartsCt[part]: " << partsCt[part] << std::endl;
+
         }
         else {
             partsCt[part] = DCRTPoly(cryptoParams->GetParamsPartQ(part), Format::EVALUATION, true);
@@ -410,29 +426,46 @@ std::shared_ptr<std::vector<DCRTPoly>> KeySwitchHYBRID::EvalKeySwitchPrecomputeC
         }
     }
 
+
+    std::cout << "partsCtExt: " << partsCtExt << std::endl;
+    std::cout << "============== KeySwitchHYBRID::EvalKeySwitchPrecomputeCore End ============" << std::endl;
+    
+
     return std::make_shared<std::vector<DCRTPoly>>(std::move(partsCtExt));
 }
 
 std::shared_ptr<std::vector<DCRTPoly>> KeySwitchHYBRID::EvalFastKeySwitchCore(
     const std::shared_ptr<std::vector<DCRTPoly>> digits, const EvalKey<DCRTPoly> evalKey,
     const std::shared_ptr<ParmType> paramsQl) const {
+    std::cout << "============== KeySwitchHYBRID::EvalFastKeySwitchCore ============" << std::endl;
+    std::cout << "cv: " << digits << std::endl;
     const auto cryptoParams = std::dynamic_pointer_cast<CryptoParametersRNS>(evalKey->GetCryptoParameters());
 
     std::shared_ptr<std::vector<DCRTPoly>> cTilda = EvalFastKeySwitchCoreExt(digits, evalKey, paramsQl);
 
     PlaintextModulus t = (cryptoParams->GetNoiseScale() == 1) ? 0 : cryptoParams->GetPlaintextModulus();
 
+    // c_evk0
     DCRTPoly ct0 = (*cTilda)[0].ApproxModDown(paramsQl, cryptoParams->GetParamsP(), cryptoParams->GetPInvModq(),
                                               cryptoParams->GetPInvModqPrecon(), cryptoParams->GetPHatInvModp(),
                                               cryptoParams->GetPHatInvModpPrecon(), cryptoParams->GetPHatModq(),
                                               cryptoParams->GetModqBarrettMu(), cryptoParams->GettInvModp(),
                                               cryptoParams->GettInvModpPrecon(), t, cryptoParams->GettModqPrecon());
 
+    // c_evk1
     DCRTPoly ct1 = (*cTilda)[1].ApproxModDown(paramsQl, cryptoParams->GetParamsP(), cryptoParams->GetPInvModq(),
                                               cryptoParams->GetPInvModqPrecon(), cryptoParams->GetPHatInvModp(),
                                               cryptoParams->GetPHatInvModpPrecon(), cryptoParams->GetPHatModq(),
                                               cryptoParams->GetModqBarrettMu(), cryptoParams->GettInvModp(),
                                               cryptoParams->GettInvModpPrecon(), t, cryptoParams->GettModqPrecon());
+
+    std::cout << "########### cTilda #####################" << std::endl;
+    std::cout << "(*cTilda)[0]: " << (*cTilda)[0] << std::endl;
+    std::cout << "(*cTilda)[1]: " << (*cTilda)[1] << std::endl;
+
+    std::cout << "########### Relin #####################" << std::endl;
+    std::cout << "ct0: " << ct0 << std::endl;
+    std::cout << "ct1: " << ct1 << std::endl;
 
     return std::make_shared<std::vector<DCRTPoly>>(std::initializer_list<DCRTPoly>{std::move(ct0), std::move(ct1)});
 }
@@ -440,6 +473,8 @@ std::shared_ptr<std::vector<DCRTPoly>> KeySwitchHYBRID::EvalFastKeySwitchCore(
 std::shared_ptr<std::vector<DCRTPoly>> KeySwitchHYBRID::EvalFastKeySwitchCoreExt(
     const std::shared_ptr<std::vector<DCRTPoly>> digits, const EvalKey<DCRTPoly> evalKey,
     const std::shared_ptr<ParmType> paramsQl) const {
+    std::cout << "============== KeySwitchHYBRID::EvalFastKeySwitchCoreExt ============" << std::endl;
+    std::cout << "cv: " << digits << std::endl;
     const auto cryptoParams         = std::dynamic_pointer_cast<CryptoParametersRNS>(evalKey->GetCryptoParameters());
     const std::vector<DCRTPoly>& bv = evalKey->GetBVector();
     const std::vector<DCRTPoly>& av = evalKey->GetAVector();
@@ -453,6 +488,8 @@ std::shared_ptr<std::vector<DCRTPoly>> KeySwitchHYBRID::EvalFastKeySwitchCoreExt
 
     DCRTPoly cTilda0(paramsQlP, Format::EVALUATION, true);
     DCRTPoly cTilda1(paramsQlP, Format::EVALUATION, true);
+
+    std::cout << "============ Dyadic Multiplication ============\n";
 
     for (uint32_t j = 0; j < digits->size(); j++) {
         const DCRTPoly& cj = (*digits)[j];

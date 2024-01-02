@@ -33,7 +33,7 @@ foreach (app ${BMARK_SRC_FILES})
 endforeach()
 
 add_custom_target( allbenchmark )
-add_dependencies( allbenchmark ${BMAPPS} )
+# add_dependencies( allbenchmark ${BMAPPS} )
 
 add_custom_command( OUTPUT benchmarkinfocmd COMMAND echo Builds benchmark lib and these apps: ${BMAPPS} )
 add_custom_target( benchmarkinfo DEPENDS benchmarkinfocmd )

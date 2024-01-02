@@ -121,7 +121,7 @@ int main(int argc, char* argv[]) {
 
     // Key-Switching SCENARIO CONFIGURATION
     int case_num = 3;
-    int curr_level_plus_one = 24; // =l+1 (<=L+1) (if l=0 occurs error)
+    int curr_level_plus_one = 2; // =l+1 (<=L+1) (if l=0 occurs error)
     int ring_dim = 1<<2;
     BootstrapExample(2, case_num, curr_level_plus_one, ring_dim);
 }
@@ -289,6 +289,8 @@ void BootstrapExample(uint32_t numSlots, uint32_t case_num, uint32_t curr_level_
         x.push_back(i);
     }
 
+    std::cout << "x: " << x << std::endl;
+
     // Encoding as plaintexts
     // We specify the number of slots as numSlots to achieve a performance improvement.
     // We use the other default values of depth 1, levels 0, and no params.
@@ -303,6 +305,7 @@ void BootstrapExample(uint32_t numSlots, uint32_t case_num, uint32_t curr_level_
 
     // PRINTING Plaintext Parameters
     std::cout << "============ PlainText Parameters ============" << std::endl;
+    std::cout << "Input : " << x;
     std::cout << "Input: " << ptxt;
     usint ringDim = cryptoContext->GetRingDimension();
     std::cout << "Ring Dimension: " << ringDim << std::endl;
